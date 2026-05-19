@@ -66,7 +66,7 @@
   <div id="err" class="error" style="display:none"></div>
 </div>
 <script>
-var SCRIPT_URL = 'https://script.google.com/a/macros/demandx.ai/s/AKfycbwB739xHsyPJixFk2-p8V1z2z8BUVYkTQn90MMvQyXk7uXvAoYWFsKeD7Z8qjAfWnRL/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwB739xHsyPJixFk2-p8V1z2z8BUVYkTQn90MMvQyXk7uXvAoYWFsKeD7Z8qjAfWnRL/exec';
 var TOKEN = 'performek-intake-2026';
 function badge(v, hi, mid) {
   return '<span class="badge ' + (v >= hi ? 'g' : v >= mid ? 'a' : 'r') + '">' + v + '</span>';
@@ -102,11 +102,11 @@ function render(d) {
   }).join('');
   document.getElementById('week').innerHTML = '<table>' + head(['Week','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + wRows + '</tbody></table>';
   var mRows = d.byMonth.map(function(r) {
-    return '<tr><td><strong>' + r.month + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,250,150) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + bar(r.rate) + '</td></tr>';
+    return '<tr><td><strong>' + r.month + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,250,150) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + r.rate + '%</td></tr>';
   }).join('');
   document.getElementById('month').innerHTML = '<table>' + head(['Month','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + mRows + '</tbody></table>';
   var fRows = d.byFirm.map(function(r) {
-    return '<tr><td><strong>' + r.firm + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,200,50) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + bar(r.rate) + '</td></tr>';
+    return '<tr><td><strong>' + r.firm + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,200,50) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + r.rate + '%</td></tr>';
   }).join('');
   document.getElementById('firm').innerHTML = '<table>' + head(['Law firm','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + fRows + '</tbody></table>';
   if (!d.flagged || !d.flagged.length) {
@@ -135,7 +135,7 @@ function load() {
     if (document.getElementById('main').style.display === 'none') {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('err').style.display = 'block';
-      document.getElementById('err').textContent = 'Could not load data — request timed out. Please check your Apps Script deployment.';
+      document.getElementById('err').textContent = 'Could not load data — request timed out.';
     }
   }, 15000);
   var script = document.createElement('script');
