@@ -122,8 +122,8 @@ function render(d) {
 }
 window.dashboardCallback = function(d) {
   clearTimeout(window._cbTimeout);
-  document.getElementById('loading').style.display = 'none';
   if (d.error) {
+    document.getElementById('loading').style.display = 'none';
     document.getElementById('err').style.display = 'block';
     document.getElementById('err').textContent = 'Error: ' + d.error;
     return;
@@ -132,18 +132,14 @@ window.dashboardCallback = function(d) {
 };
 function load() {
   window._cbTimeout = setTimeout(function() {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('err').style.display = 'block';
-    document.getElementById('err').textContent = 'Could not load data — request timed out. Please check your Apps Script deployment.';
+    if (document.getElementById('main').style.display === 'none') {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('err').style.display = 'block';
+      document.getElementById('err').textContent = 'Could not load data — request timed out. Please check your Apps Script deployment.';
+    }
   }, 15000);
   var script = document.createElement('script');
   script.src = SCRIPT_URL + '?token=' + TOKEN + '&callback=dashboardCallback';
-  script.onerror = function() {
-    clearTimeout(window._cbTimeout);
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('err').style.display = 'block';
-    document.getElementById('err').textContent = 'Could not load data. Please check your Apps Script deployment.';
-  };
   document.head.appendChild(script);
 }
 load();
