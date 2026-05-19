@@ -17,7 +17,7 @@
   .tabs { display: flex; border-bottom: 2px solid #DFE1E6; margin-bottom: 18px; }
   .tab { background: none; border: none; padding: 8px 18px; font-size: 13px; color: #6B778C; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 500; }
   .tab.active { color: #0052CC; border-bottom-color: #0052CC; }
-  .card { background: #fff; border-radius: 8px; border: 1px solid #DFE1E6; padding: 0; overflow: hidden; }
+  .card { background: #fff; border-radius: 8px; border: 1px solid #DFE1E6; overflow: hidden; }
   .banner { background: #FFF7D6; border: 1px solid #FF991F; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #974F0C; margin-bottom: 16px; display: none; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { background: #F4F5F7; color: #6B778C; font-weight: 600; text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 2px solid #DFE1E6; }
@@ -40,7 +40,6 @@
 <body>
 <div class="wrap">
   <h1>Intake approvals dashboard — 2026</h1>
-
   <div id="loading" class="loading">Loading live data from Google Sheets…</div>
   <div id="main" style="display:none">
     <div class="banner" id="banner"></div>
@@ -51,10 +50,10 @@
       <div class="metric"><div class="metric-label">Invalid entries</div><div class="metric-value warn" id="m-flags">—</div></div>
     </div>
     <div class="tabs">
-      <button class="tab active" onclick="show('week',this)">By week</button>
-      <button class="tab" onclick="show('month',this)">By month</button>
-      <button class="tab" onclick="show('firm',this)">By law firm</button>
-      <button class="tab" onclick="show('flags',this)">Flagged entries</button>
+      <button class="tab active" onclick="showTab('week',this)">By week</button>
+      <button class="tab" onclick="showTab('month',this)">By month</button>
+      <button class="tab" onclick="showTab('firm',this)">By law firm</button>
+      <button class="tab" onclick="showTab('flags',this)">Flagged entries</button>
     </div>
     <div class="card">
       <div id="week"></div>
@@ -66,88 +65,87 @@
   </div>
   <div id="err" class="error" style="display:none"></div>
 </div>
-
 <script>
-var URL  = 'https://script.google.com/macros/s/AKfycbxsHiqKxCrRC32klQbnYteRAN56jyvl5gGOQud5oV8vNy4HuwE_efeBEkgwGYd5KxgN/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxsHiqKxCrRC32klQbnYteRAN56jyvl5gGOQud5oV8vNy4HuwE_efeBEkgwGYd5KxgN/exec';
 var TOKEN = 'performek-intake-2026';
-
 function badge(v, hi, mid) {
   return '<span class="badge ' + (v >= hi ? 'g' : v >= mid ? 'a' : 'r') + '">' + v + '</span>';
 }
-
 function bar(rate) {
   var color = rate >= 80 ? '#36B37E' : rate >= 65 ? '#FF991F' : '#FF5630';
   return '<div class="bar-wrap"><div class="bar"><div class="bar-fill" style="width:' + rate + '%;background:' + color + '"></div></div><span style="font-size:12px;min-width:34px">' + rate + '%</span></div>';
 }
-
-function show(name, btn) {
+function showTab(name, btn) {
   ['week','month','firm','flags'].forEach(function(t) {
     document.getElementById(t).style.display = t === name ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
 }
-
 function head(cols) {
   return '<thead><tr>' + cols.map(function(c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead>';
 }
-
-function load() {
-  fetch(URL + '?token=' + TOKEN)
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('main').style.display = 'block';
-
-      document.getElementById('m-approved').textContent = d.totalApproved.toLocaleString();
-      document.getElementById('m-reviewed').textContent = d.totalReviewed.toLocaleString();
-      document.getElementById('m-rate').textContent     = d.approvalRate + '%';
-      document.getElementById('m-flags').textContent    = d.flaggedCount;
-
-      if (d.flaggedCount > 0) {
-        var b = document.getElementById('banner');
-        b.textContent = '⚠️ ' + d.flaggedCount + ' invalid product entr' + (d.flaggedCount > 1 ? 'ies' : 'y') + ' detected — excluded from all counts. See Flagged entries tab.';
-        b.style.display = 'block';
-      }
-
-      // By week
-      var wRows = d.byWeek.map(function(r) {
-        return '<tr><td><strong>Week ' + r.week + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,70,40) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + bar(r.rate) + '</td></tr>';
-      }).join('');
-      document.getElementById('week').innerHTML = '<table>' + head(['Week','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + wRows + '</tbody></table>';
-
-      // By month
-      var mRows = d.byMonth.map(function(r) {
-        return '<tr><td><strong>' + r.month + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,250,150) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + bar(r.rate) + '</td></tr>';
-      }).join('');
-      document.getElementById('month').innerHTML = '<table>' + head(['Month','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + mRows + '</tbody></table>';
-
-      // By firm
-      var fRows = d.byFirm.map(function(r) {
-        return '<tr><td><strong>' + r.firm + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,200,50) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + bar(r.rate) + '</td></tr>';
-      }).join('');
-      document.getElementById('firm').innerHTML = '<table>' + head(['Law firm','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + fRows + '</tbody></table>';
-
-      // Flagged
-      if (!d.flagged.length) {
-        document.getElementById('flags').innerHTML = '<div class="empty">✅ No invalid entries — all firm-product combinations are valid.</div>';
-      } else {
-        var flRows = d.flagged.map(function(r) {
-          return '<tr><td>' + r.date + '</td><td>W' + r.week + '</td><td>' + r.firm + '</td><td><span class="badge r">' + r.product + '</span></td><td style="color:#6B778C">' + r.valid + '</td><td>' + r.status + '</td></tr>';
-        }).join('');
-        document.getElementById('flags').innerHTML = '<table>' + head(['Date','Week','Law firm','Product entered','Valid products','Status']) + '<tbody>' + flRows + '</tbody></table>';
-      }
-
-      var upd = new Date(d.lastUpdated);
-      document.getElementById('updated').textContent = 'Last refreshed: ' + upd.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-    })
-    .catch(function(err) {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('err').style.display = 'block';
-      document.getElementById('err').textContent = 'Could not load data. Error: ' + err.message;
-    });
+function render(d) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  document.getElementById('m-approved').textContent = d.totalApproved.toLocaleString();
+  document.getElementById('m-reviewed').textContent = d.totalReviewed.toLocaleString();
+  document.getElementById('m-rate').textContent = d.approvalRate + '%';
+  document.getElementById('m-flags').textContent = d.flaggedCount;
+  if (d.flaggedCount > 0) {
+    var b = document.getElementById('banner');
+    b.textContent = '⚠️ ' + d.flaggedCount + ' invalid product entr' + (d.flaggedCount > 1 ? 'ies' : 'y') + ' detected — excluded from all counts. See Flagged entries tab.';
+    b.style.display = 'block';
+  }
+  var wRows = d.byWeek.map(function(r) {
+    return '<tr><td><strong>Week ' + r.week + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,70,40) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + bar(r.rate) + '</td></tr>';
+  }).join('');
+  document.getElementById('week').innerHTML = '<table>' + head(['Week','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + wRows + '</tbody></table>';
+  var mRows = d.byMonth.map(function(r) {
+    return '<tr><td><strong>' + r.month + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,250,150) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + bar(r.rate) + '</td></tr>';
+  }).join('');
+  document.getElementById('month').innerHTML = '<table>' + head(['Month','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + mRows + '</tbody></table>';
+  var fRows = d.byFirm.map(function(r) {
+    return '<tr><td><strong>' + r.firm + '</strong></td><td>' + r.noIssues + '</td><td>' + r.withIssues + '</td><td>' + badge(r.approved,200,50) + '</td><td>' + r.rework + '</td><td>' + r.reject + '</td><td>' + bar(r.rate) + '</td></tr>';
+  }).join('');
+  document.getElementById('firm').innerHTML = '<table>' + head(['Law firm','No issues','With issues','Total approved','Rework','Reject','Approval rate']) + '<tbody>' + fRows + '</tbody></table>';
+  if (!d.flagged || !d.flagged.length) {
+    document.getElementById('flags').innerHTML = '<div class="empty">✅ No invalid entries — all firm-product combinations are valid.</div>';
+  } else {
+    var flRows = d.flagged.map(function(r) {
+      return '<tr><td>' + r.date + '</td><td>W' + r.week + '</td><td>' + r.firm + '</td><td><span class="badge r">' + r.product + '</span></td><td style="color:#6B778C">' + r.valid + '</td><td>' + r.status + '</td></tr>';
+    }).join('');
+    document.getElementById('flags').innerHTML = '<table>' + head(['Date','Week','Law firm','Product entered','Valid products','Status']) + '<tbody>' + flRows + '</tbody></table>';
+  }
+  var upd = new Date(d.lastUpdated);
+  document.getElementById('updated').textContent = 'Last refreshed: ' + upd.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 }
-
+window.dashboardCallback = function(d) {
+  clearTimeout(window._cbTimeout);
+  document.getElementById('loading').style.display = 'none';
+  if (d.error) {
+    document.getElementById('err').style.display = 'block';
+    document.getElementById('err').textContent = 'Error: ' + d.error;
+    return;
+  }
+  render(d);
+};
+function load() {
+  window._cbTimeout = setTimeout(function() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('err').style.display = 'block';
+    document.getElementById('err').textContent = 'Could not load data — request timed out. Please check your Apps Script deployment.';
+  }, 15000);
+  var script = document.createElement('script');
+  script.src = SCRIPT_URL + '?token=' + TOKEN + '&callback=dashboardCallback';
+  script.onerror = function() {
+    clearTimeout(window._cbTimeout);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('err').style.display = 'block';
+    document.getElementById('err').textContent = 'Could not load data. Please check your Apps Script deployment.';
+  };
+  document.head.appendChild(script);
+}
 load();
 </script>
 </body>
