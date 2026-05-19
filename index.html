@@ -139,7 +139,7 @@ function load() {
     }
   }, 15000);
   var script = document.createElement('script');
-  script.src = SCRIPT_URL + '?token=' + TOKEN + '&callback=dashboardCallback';
+  script.src = SCRIPT_URL + '?token=' + TOKEN + '&callback=dashboardCallback&t=' + Date.now();
   document.head.appendChild(script);
 }
 load();
